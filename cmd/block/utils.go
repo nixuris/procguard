@@ -1,12 +1,62 @@
 package block
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
+
+	"procguard/internal/auth"
+	"procguard/internal/config"
+
+	"golang.org/x/term"
 )
+
+// promptAndVerifyPassword provides the core authentication logic for CLI commands.
+// It intelligently handles password input based on the execution context.
+func promptAndVerifyPassword() {
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Error loading config:", err)
+		os.Exit(1)
+	}
+
+	if cfg.PasswordHash == "" {
+		fmt.Fprintln(os.Stderr, "No password set. Please run 'procguard password set' or set one via the GUI.")
+		os.Exit(1)
+	}
+
+	var pass []byte
+	// If running in an interactive terminal, prompt the user directly.
+	if term.IsTerminal(int(os.Stdin.Fd())) {
+		fmt.Print("Enter password: ")
+		pass, err = term.ReadPassword(int(syscall.Stdin))
+		fmt.Println()
+	} else {
+		// If not in a terminal (e.g., called from GUI), read the password from stdin.
+		reader := bufio.NewReader(os.Stdin)
+		passStr, errIo := reader.ReadString('\n')
+		if errIo != nil && errIo != io.EOF {
+			fmt.Fprintln(os.Stderr, "Failed to read password from stdin:", errIo)
+			os.Exit(1)
+		}
+		pass = []byte(strings.TrimSpace(passStr))
+	}
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "\nError reading password:", err)
+		os.Exit(1)
+	}
+
+	if !auth.CheckPasswordHash(string(pass), cfg.PasswordHash) {
+		fmt.Fprintln(os.Stderr, "Incorrect password.")
+		os.Exit(1)
+	}
+}
 
 const blockListFile = "blocklist.json"
 

@@ -18,6 +18,7 @@ var BlockAddCmd = &cobra.Command{
 	Short: "Add program to block-list (OS-agnostic)",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		promptAndVerifyPassword()
 		// All entries are stored in lowercase for case-insensitive matching.
 		name := strings.ToLower(args[0])
 		list, _ := LoadBlockList()

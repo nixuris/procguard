@@ -109,11 +109,14 @@
       }
       const res = await fetch(url);
       const data = await res.json();
+
       if (data && data.length > 0) {
-        results.innerHTML = data.map(l => {
-            const processName = l[1];
-            return `<div class="result-item"><input type="checkbox" name="search-result-app" value="${processName}"> ${l.join(' | ')}</div>`;
-        }).join('');
+        // Check if we have rich results (Windows) or simple results (Unix)
+        if (data[0].appInfo) {
+            results.innerHTML = data.map(renderRichResult).join('');
+        } else {
+            results.innerHTML = data.map(renderSimpleResult).join('');
+        }
       } else {
         results.innerHTML = "Không tìm thấy kết quả.";
       }
@@ -126,12 +129,18 @@
         return;
       }
       
-      // Remove duplicates
+      const password = prompt("Enter password to confirm:");
+      if (password === null) return; // User cancelled
+
       const uniqueApps = [...new Set(selectedApps)];
 
-      await fetch('/api/block',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({names:uniqueApps})});
-      blockStatus.innerText = 'Đã chặn: ' + uniqueApps.join(', ');
-      setTimeout(() => { blockStatus.innerText = ''; }, 3000);
+      const res = await fetch('/api/block',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({names:uniqueApps, password: password})});
+      if (res.ok) {
+        blockStatus.innerText = 'Đã chặn: ' + uniqueApps.join(', ');
+        setTimeout(() => { blockStatus.innerText = ''; }, 3000);
+      } else {
+        alert("Incorrect password.");
+      }
     }
 
     async function loadBlocklist() {
@@ -153,14 +162,23 @@
             alert("Vui lòng chọn các ứng dụng để bỏ chặn.");
             return;
         }
-        await fetch('/api/unblock', {
+
+        const password = prompt("Enter password to confirm:");
+        if (password === null) return; // User cancelled
+
+        const res = await fetch('/api/unblock', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({names: selectedApps})
+            body: JSON.stringify({names: selectedApps, password: password})
         });
-        unblockStatus.innerText = 'Đã bỏ chặn: ' + selectedApps.join(', ');
-        setTimeout(() => { unblockStatus.innerText = ''; }, 3000);
-        loadBlocklist(); // Refresh the list
+
+        if (res.ok) {
+            unblockStatus.innerText = 'Đã bỏ chặn: ' + selectedApps.join(', ');
+            setTimeout(() => { unblockStatus.innerText = ''; }, 3000);
+            loadBlocklist(); // Refresh the list
+        } else {
+            alert("Incorrect password.");
+        }
     }
 
     // Set defaults and show search view by default

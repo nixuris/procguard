@@ -19,6 +19,7 @@ var BlockRmCmd = &cobra.Command{
 	Short: "Remove program from block-list",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		promptAndVerifyPassword()
 		// All entries are stored in lowercase for case-insensitive matching.
 		base := strings.ToLower(args[0])
 		list, _ := LoadBlockList()

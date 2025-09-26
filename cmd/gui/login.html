@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>ProcGuard Login</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #333; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+    #login-box { background: #444; padding: 2rem; border-radius: 8px; text-align: center; }
+    input { padding: .5rem; margin-bottom: 1rem; width: 200px; }
+    button { background: #0bf; border: 0; padding: .5rem 1rem; border-radius: 4px; cursor: pointer; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="login-box">
+    <h2>ProcGuard Login</h2>
+    <input type="password" id="password" placeholder="Enter password">
+    <button onclick="login()">Login</button>
+  </div>
+  <script>
+    async function login() {
+      const password = document.getElementById('password').value;
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ password: password })
+      });
+
+      if (res.ok) {
+        // On correct password, the server will set a cookie and then
+        // the page will reload to the main dashboard.
+        window.location.reload();
+      } else {
+        alert("Incorrect password.");
+      }
+    }
+    // Allow login on pressing Enter
+    document.getElementById('password').addEventListener('keyup', function(event) {
+        if (event.key === "Enter") {
+            login();
+        }
+    });
+  </script>
+</body>
+</html>

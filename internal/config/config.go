@@ -13,6 +13,8 @@ type Config struct {
 	SystemdInstalled bool `json:"systemd_installed"`
 	// AutostartEnabled tracks whether the Windows autostart task has been created.
 	AutostartEnabled bool `json:"autostart_enabled"`
+	// PasswordHash stores the bcrypt hash of the user's password.
+	PasswordHash string `json:"password_hash,omitempty"`
 }
 
 // GetConfigPath returns the path to the configuration file.
