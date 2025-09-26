@@ -11,7 +11,20 @@
     #time-filter-container > * { margin-right: 1rem; }
     nav > button { background: #333; color: #fff; }
     .status-message { margin-left: 1rem; padding: 5px; background: #333; color: #fff; border-radius: 3px; }
-    .result-item { margin-bottom: 5px; }
+    .result-item { display: flex; align-items: center; margin-bottom: 8px; padding: 4px; border-radius: 4px; }
+    .result-item:hover { background: #ddd; }
+    .result-item input { margin-right: 8px; }
+    .result-icon { width: 24px; height: 24px; margin-right: 8px; }
+    .result-details { display: flex; flex-direction: column; }
+    .result-name { font-size: 16px; font-weight: bold; }
+    .result-log { font-size: 11px; color: #555; }
+
+    /* New Modal Styles */
+    #password-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    #password-modal { background: #444; color: #fff; padding: 2rem; border-radius: 8px; text-align: center; }
+    #password-modal input { display: block; padding: .5rem; margin: 0 auto 1rem auto; width: 250px; }
+    #password-modal-buttons button { margin: 0 5px; }
+
   </style>
 </head>
 <body>
@@ -51,6 +64,19 @@
     <div id="blocklist-items"></div>
   </div>
 
+  <!-- New Password Modal HTML -->
+  <div id="password-modal-overlay">
+    <div id="password-modal">
+      <h3>Xác thực</h3>
+      <p>Vui lòng nhập mật khẩu để tiếp tục.</p>
+      <input type="password" id="modal-password-input" placeholder="Mật khẩu">
+      <div id="password-modal-buttons">
+        <button id="modal-cancel-btn">Hủy</button>
+        <button id="modal-confirm-btn">Xác nhận</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const results = document.getElementById('results');
     const q = document.getElementById('q');
@@ -64,6 +90,39 @@
     const blockStatus = document.getElementById('block-status');
     const unblockStatus = document.getElementById('unblock-status');
 
+    // Modal elements
+    const passwordModalOverlay = document.getElementById('password-modal-overlay');
+    const passwordModalInput = document.getElementById('modal-password-input');
+    const modalConfirmBtn = document.getElementById('modal-confirm-btn');
+    const modalCancelBtn = document.getElementById('modal-cancel-btn');
+
+    // --- Modal Logic ---
+    let passwordResolve = null;
+    modalCancelBtn.onclick = () => {
+      passwordModalOverlay.style.display = 'none';
+      passwordModalInput.value = '';
+      if (passwordResolve) passwordResolve(null); // Resolve with null if cancelled
+    };
+
+    function showPasswordPrompt() {
+      passwordModalOverlay.style.display = 'flex';
+      passwordModalInput.focus();
+      return new Promise(resolve => {
+        passwordResolve = resolve;
+        modalConfirmBtn.onclick = () => {
+          passwordModalOverlay.style.display = 'none';
+          resolve(passwordModalInput.value);
+          passwordModalInput.value = '';
+        };
+        passwordModalInput.onkeyup = (event) => {
+            if (event.key === "Enter") {
+                modalConfirmBtn.click();
+            }
+        };
+      });
+    }
+
+    // --- Main App Logic ---
     function setDefaults() {
         const now = new Date();
         const year = now.getFullYear();
@@ -130,8 +189,7 @@
       const data = await res.json();
 
       if (data && data.length > 0) {
-        // Check if we have rich results (Windows) or simple results (Unix)
-        if (data[0].appInfo) {
+        if (data[0] && data[0].appInfo) {
             results.innerHTML = data.map(renderRichResult).join('');
         } else {
             results.innerHTML = data.map(renderSimpleResult).join('');
@@ -148,7 +206,7 @@
         return;
       }
       
-      const password = prompt("Enter password to confirm:");
+      const password = await showPasswordPrompt();
       if (password === null) return; // User cancelled
 
       const uniqueApps = [...new Set(selectedApps)];
@@ -158,7 +216,7 @@
         blockStatus.innerText = 'Đã chặn: ' + uniqueApps.join(', ');
         setTimeout(() => { blockStatus.innerText = ''; }, 3000);
       } else {
-        alert("Incorrect password.");
+        alert("Mật khẩu không đúng.");
       }
     }
 
@@ -182,7 +240,7 @@
             return;
         }
 
-        const password = prompt("Enter password to confirm:");
+        const password = await showPasswordPrompt();
         if (password === null) return; // User cancelled
 
         const res = await fetch('/api/unblock', {
@@ -196,7 +254,7 @@
             setTimeout(() => { unblockStatus.innerText = ''; }, 3000);
             loadBlocklist(); // Refresh the list
         } else {
-            alert("Incorrect password.");
+            alert("Mật khẩu không đúng.");
         }
     }
 
