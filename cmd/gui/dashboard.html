@@ -84,6 +84,25 @@
         }
     }
 
+    function renderRichResult(item) {
+        const exeName = item.appInfo.exeName;
+        const icon = item.appInfo.iconAsBase64 ? `<img src="${item.appInfo.iconAsBase64}" class="result-icon">` : `<div class="result-icon"></div>`;
+        
+        return `<div class="result-item">
+                    <input type="checkbox" name="search-result-app" value="${exeName}">
+                    ${icon}
+                    <div class="result-details">
+                        <div class="result-name">${item.appInfo.name}</div>
+                        <div class="result-log">${item.rawLog}</div>
+                    </div>
+                </div>`;
+    }
+
+    function renderSimpleResult(item) {
+        const processName = item[1];
+        return `<div class="result-item"><input type="checkbox" name="search-result-app" value="${processName}"> ${item.join(' | ')}</div>`;
+    }
+
     async function search(range){
       let since = '';
       let until = '';

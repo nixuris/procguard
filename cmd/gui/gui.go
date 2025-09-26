@@ -162,7 +162,13 @@ func apiSearch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
-	out, _ := cmd.Output()
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		http.Error(w, string(out), 500)
+		return
+	}
+
 	// The find command now always produces JSON, either rich or simple.
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(out)
