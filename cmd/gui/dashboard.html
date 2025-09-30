@@ -19,8 +19,9 @@
 </head>
 <body>
   <nav>
-    <button onclick="showView('search-view')">Tìm kiếm</button>
-    <button onclick="showView('blocklist-view')">Xem ứng dụng bị chặn</button>
+    <button onclick="showView('search-view')">Tìm kiếm và chặn</button>
+    <button onclick="showView('blocklist-view')">Quản lý ứng dụng</button>
+    <button onclick="showView('web-block-view')">Quản lý web</button>
     <button onclick="showView('settings-view')">Cài đặt</button>
     <button onclick="window.location.href='/logout'" style="float: right;">Đăng xuất</button>
   </nav>
@@ -60,6 +61,17 @@
     <div id="blocklist-items"></div>
   </div>
 
+  <div id="web-block-view" style="display:none;">
+    <h2>Quản lý web</h2>
+    <div id="web-block-controls">
+        <input id="web-domain" placeholder="nhập tên miền">
+        <button onclick="addWebBlock()">Chặn tên miền</button>
+        <button onclick="removeWebBlock()">Bỏ chặn mục đã chọn</button>
+        <span id="web-block-status" class="status-message"></span>
+    </div>
+    <div id="web-blocklist-items"></div>
+  </div>
+
   <div id="settings-view" style="display:none;">
     <h2>Cài đặt</h2>
     <div id="settings-controls">
@@ -91,11 +103,15 @@
     const blocklistItems = document.getElementById('blocklist-items');
     const searchView = document.getElementById('search-view');
     const blocklistView = document.getElementById('blocklist-view');
+    const webBlockView = document.getElementById('web-block-view');
     const settingsView = document.getElementById('settings-view');
     const uninstallModal = document.getElementById('uninstall-modal');
     const uninstallForm = document.getElementById('uninstall-form');
     const uninstallPasswordInput = document.getElementById('uninstall-password');
     const uninstallError = document.getElementById('uninstall-error');
+    const webDomainInput = document.getElementById('web-domain');
+    const webBlocklistItems = document.getElementById('web-blocklist-items');
+    const webBlockStatus = document.getElementById('web-block-status');
     const blockStatus = document.getElementById('block-status');
     const unblockStatus = document.getElementById('unblock-status');
 
@@ -112,12 +128,62 @@
     function showView(viewName) {
         searchView.style.display = 'none';
         blocklistView.style.display = 'none';
+        webBlockView.style.display = 'none';
         settingsView.style.display = 'none';
         document.getElementById(viewName).style.display = 'block';
 
         if (viewName === 'blocklist-view') {
             loadBlocklist();
         }
+        if (viewName === 'web-block-view') {
+            loadWebBlocklist();
+        }
+    }
+
+    async function loadWebBlocklist() {
+        const res = await fetch('/api/web-blocklist');
+        const data = await res.json();
+        webBlocklistItems.innerHTML = '';
+        if (data && data.length > 0) {
+            data.forEach(app => {
+                webBlocklistItems.innerHTML += `<div><input type="checkbox" name="web-blocked-domain" value="${app}"> ${app}</div>`;
+            });
+        } else {
+            webBlocklistItems.innerHTML = 'Hiện không có tên miền nào bị chặn.';
+        }
+    }
+
+    async function addWebBlock() {
+        const domain = webDomainInput.value.trim();
+        if (domain === "") {
+            alert("Vui lòng nhập một tên miền.");
+            return;
+        }
+        await fetch('/api/web-block', { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ domains: [domain] })
+        });
+        webBlockStatus.innerText = 'Đã gửi yêu cầu chặn tên miền. Vui lòng xác nhận quyền quản trị.';
+        setTimeout(() => { webBlockStatus.innerText = ''; }, 5000);
+        webDomainInput.value = '';
+        loadWebBlocklist();
+    }
+
+    async function removeWebBlock() {
+        const selectedDomains = Array.from(document.querySelectorAll('input[name="web-blocked-domain"]:checked')).map(cb => cb.value);
+        if (selectedDomains.length === 0) {
+            alert("Vui lòng chọn các tên miền để bỏ chặn.");
+            return;
+        }
+        await fetch('/api/web-unblock', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({domains: selectedDomains})
+        });
+        webBlockStatus.innerText = 'Đã gửi yêu cầu bỏ chặn tên miền. Vui lòng xác nhận quyền quản trị.';
+        setTimeout(() => { webBlockStatus.innerText = ''; }, 5000);
+        loadWebBlocklist();
     }
 
     async function search(range){

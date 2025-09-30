@@ -6,6 +6,7 @@ import (
 	"procguard/cmd/block"
 	"procguard/cmd/daemon"
 	"procguard/cmd/gui"
+	"procguard/cmd/internal"
 	"procguard/cmd/uninstall"
 
 	"github.com/spf13/cobra"
@@ -51,4 +52,5 @@ func init() {
 	rootCmd.AddCommand(block.BlockCmd)
 	rootCmd.AddCommand(gui.GuiCmd)
 	rootCmd.AddCommand(uninstall.UninstallCmd)
+	rootCmd.AddCommand(internal.UpdateHostsCmd)
 }

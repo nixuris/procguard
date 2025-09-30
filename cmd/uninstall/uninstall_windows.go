@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"procguard/internal/blocklist"
+	"procguard/internal/chrome"
 	"strings"
 )
 
@@ -17,6 +18,11 @@ func platformUninstall() error {
 	// Unblock all files
 	if err := unblockAll(); err != nil {
 		return err
+	}
+
+	// Remove Chrome extension policies
+	if err := chrome.UninstallExtension(); err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: could not remove Chrome extension policies: %v\n", err)
 	}
 
 	// Remove Task Scheduler task
