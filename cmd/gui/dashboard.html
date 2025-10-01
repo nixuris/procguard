@@ -6,10 +6,15 @@
   <style>
     body{font-family:Arial,background:#f76f53;color:#000;margin:0;padding:2rem}
     button{background:#0bf;border:0;padding:.5rem 1rem;border-radius:4px;cursor:pointer}
-    #results, #blocklist-items{height:400px;overflow-y:scroll;background:#e6e6e6;padding:1rem;font-size:13px;}
-    #search-container, #blocklist-controls, #time-filter-container{margin-bottom: 1rem;}
+    .main-nav > button { background: #333; color: #fff; }
+    .sub-nav > button { background: #555; color: #fff; }
+    #main-view { text-align: center; }
+    #main-view h2 { font-size: 2.5rem; }
+    #main-view p { font-size: 1.2rem; }
+    .main-view-btn { padding: 2rem; font-size: 1.5rem; margin: 1rem; width: 20%; }
+    #results, #blocklist-items, #web-blocklist-items{height:400px;overflow-y:scroll;background:#e6e6e6;padding:1rem;font-size:13px;}
+    #search-container, #blocklist-controls, #time-filter-container, #web-block-controls, #settings-controls{margin-bottom: 1rem;}
     #time-filter-container > * { margin-right: 1rem; }
-    nav > button { background: #333; color: #fff; }
     .status-message { margin-left: 1rem; padding: 5px; background: #333; color: #fff; border-radius: 3px; }
     .result-item { margin-bottom: 5px; }
     .modal { position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
@@ -18,47 +23,60 @@
   </style>
 </head>
 <body>
-  <nav>
-    <button onclick="showView('search-view')">Tìm kiếm và chặn</button>
-    <button onclick="showView('blocklist-view')">Quản lý ứng dụng</button>
-    <button onclick="showView('web-block-view')">Quản lý web</button>
+  <nav class="main-nav">
+    <button onclick="showView('main-view')">Trang chủ</button>
     <button onclick="showView('settings-view')">Cài đặt</button>
     <button onclick="window.location.href='/logout'" style="float: right;">Đăng xuất</button>
   </nav>
 
-  <div id="search-view">
-    <h2>Bảng điều khiển ProcGuard</h2>
-    <div id="search-container">
-      <input id="q" placeholder="nhập tên ứng dụng">
-      <button onclick="search()">Tìm kiếm Log</button>
-      <button onclick="block()">Chặn mục đã chọn</button>
-      <span id="block-status" class="status-message"></span>
-    </div>
-    <div id="time-filter-container">
-        <span>Lọc theo thời gian:</span>
-        <button onclick="search({since: '1 hour ago', until: 'now'})">1 giờ qua</button>
-        <button onclick="search({since: '24 hours ago', until: 'now'})">24 giờ qua</button>
-        <button onclick="search({since: '7 days ago', until: 'now'})">7 ngày qua</button>
-        <br>
-        <span>Từ: </span><input type="date" id="since_date"> <input type="time" id="since_time" step="60">
-        <span>Đến: </span><input type="date" id="until_date"> <input type="time" id="until_time" step="60">
-        <button onclick="search()">Xác nhận</button>
-    </div>
-    <h3>Kết quả tìm kiếm</h3>
-    <div id="results"></div>
+  <hr/>
+
+  <div id="main-view">
+    <h2>Bảng điều khiển chính</h2>
+    <p>Chào mừng tới ProcGuard. Vui lòng chọn một mục để quản lý.</p>
+    <button class="main-view-btn" onclick="showView('app-management-view')">Quản lý ứng dụng</button>
+    <button class="main-view-btn" onclick="showView('web-block-view')">Quản lý web</button>
   </div>
 
-  <div id="blocklist-view" style="display:none;">
-    <h2>Các ứng dụng bị chặn</h2>
-    <div id="blocklist-controls">
-        <button onclick="unblockSelected()">Bỏ chặn mục đã chọn</button>
-        <button onclick="clearBlocklist()" style="background-color: #d9534f;">Xóa toàn bộ danh sách chặn</button>
-        <button onclick="saveBlocklist()">Lưu danh sách chặn</button>
-        <button onclick="document.getElementById('load-input').click()">Tải lên danh sách chặn</button>
-        <input type="file" id="load-input" style="display: none;" onchange="loadBlocklistFile(event)">
-        <span id="unblock-status" class="status-message"></span>
+  <div id="app-management-view" style="display:none;">
+    <h2>Quản lý ứng dụng</h2>
+    <nav class="sub-nav">
+        <button onclick="showAppView('search-view')">Tìm kiếm và Chặn</button>
+        <button onclick="showAppView('blocklist-view')">Xem ứng dụng bị chặn</button>
+    </nav>
+    <div id="search-view">
+        <h3>Tìm kiếm Log</h3>
+        <div id="search-container">
+          <input id="q" placeholder="nhập tên ứng dụng">
+          <button onclick="search()">Tìm kiếm Log</button>
+          <button onclick="block()">Chặn mục đã chọn</button>
+          <span id="block-status" class="status-message"></span>
+        </div>
+        <div id="time-filter-container">
+            <span>Lọc theo thời gian:</span>
+            <button onclick="search({since: '1 hour ago', until: 'now'})">1 giờ qua</button>
+            <button onclick="search({since: '24 hours ago', until: 'now'})">24 giờ qua</button>
+            <button onclick="search({since: '7 days ago', until: 'now'})">7 ngày qua</button>
+            <br>
+            <span>Từ: </span><input type="date" id="since_date"> <input type="time" id="since_time" step="60">
+            <span>Đến: </span><input type="date" id="until_date"> <input type="time" id="until_time" step="60">
+            <button onclick="search()">Xác nhận</button>
+        </div>
+        <h3>Kết quả tìm kiếm</h3>
+        <div id="results"></div>
     </div>
-    <div id="blocklist-items"></div>
+    <div id="blocklist-view" style="display:none;">
+        <h3>Các ứng dụng bị chặn</h3>
+        <div id="blocklist-controls">
+            <button onclick="unblockSelected()">Bỏ chặn mục đã chọn</button>
+            <button onclick="clearBlocklist()" style="background-color: #d9534f;">Xóa toàn bộ danh sách chặn</button>
+            <button onclick="saveBlocklist()">Lưu danh sách chặn</button>
+            <button onclick="document.getElementById('load-input').click()">Tải lên danh sách chặn</button>
+            <input type="file" id="load-input" style="display: none;" onchange="loadBlocklistFile(event)">
+            <span id="unblock-status" class="status-message"></span>
+        </div>
+        <div id="blocklist-items"></div>
+    </div>
   </div>
 
   <div id="web-block-view" style="display:none;">
@@ -94,6 +112,15 @@
   </div>
 
   <script>
+    // Views
+    const mainView = document.getElementById('main-view');
+    const appManagementView = document.getElementById('app-management-view');
+    const searchView = document.getElementById('search-view');
+    const blocklistView = document.getElementById('blocklist-view');
+    const webBlockView = document.getElementById('web-block-view');
+    const settingsView = document.getElementById('settings-view');
+
+    // Other elements
     const results = document.getElementById('results');
     const q = document.getElementById('q');
     const sinceDateInput = document.getElementById('since_date');
@@ -101,10 +128,6 @@
     const untilDateInput = document.getElementById('until_date');
     const untilTimeInput = document.getElementById('until_time');
     const blocklistItems = document.getElementById('blocklist-items');
-    const searchView = document.getElementById('search-view');
-    const blocklistView = document.getElementById('blocklist-view');
-    const webBlockView = document.getElementById('web-block-view');
-    const settingsView = document.getElementById('settings-view');
     const uninstallModal = document.getElementById('uninstall-modal');
     const uninstallForm = document.getElementById('uninstall-form');
     const uninstallPasswordInput = document.getElementById('uninstall-password');
@@ -126,17 +149,26 @@
     }
 
     function showView(viewName) {
-        searchView.style.display = 'none';
-        blocklistView.style.display = 'none';
+        mainView.style.display = 'none';
+        appManagementView.style.display = 'none';
         webBlockView.style.display = 'none';
         settingsView.style.display = 'none';
         document.getElementById(viewName).style.display = 'block';
 
-        if (viewName === 'blocklist-view') {
-            loadBlocklist();
+        if (viewName === 'app-management-view') {
+            showAppView('search-view');
         }
         if (viewName === 'web-block-view') {
             loadWebBlocklist();
+        }
+    }
+
+    function showAppView(viewName) {
+        searchView.style.display = 'none';
+        blocklistView.style.display = 'none';
+        document.getElementById(viewName).style.display = 'block';
+        if (viewName === 'blocklist-view') {
+            loadBlocklist();
         }
     }
 
@@ -335,9 +367,9 @@
         }
     });
 
-    // Set defaults and show search view by default
+    // Set defaults and show the main view by default
     setDefaults();
-    showView('search-view');
+    showView('main-view');
   </script>
 </body>
 </html>
