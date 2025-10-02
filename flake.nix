@@ -19,6 +19,11 @@
           cmake
           nodejs_24
         ];
+        shellHook = ''
+          go env -w GOPATH=$HOME/.local/share/go
+          export NPM_CONFIG_PREFIX="$HOME/.local"
+          export PATH="$HOME/.local/bin:$PATH"
+        '';
       };
     };
 }
