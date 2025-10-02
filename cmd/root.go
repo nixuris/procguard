@@ -1,12 +1,13 @@
 package cmd
 
 import (
+	"fmt"
 	"net/http"
+	"os"
 
 	"procguard/cmd/block"
 	"procguard/cmd/daemon"
 	"procguard/cmd/gui"
-	"procguard/cmd/internal"
 	"procguard/cmd/uninstall"
 
 	"github.com/spf13/cobra"
@@ -14,6 +15,15 @@ import (
 
 // HandleDefaultStartup implements the main startup logic for GUI mode.
 func HandleDefaultStartup() {
+	// Perform first-run setup check. If it runs, exit this instance.
+	if installed, err := HandleFirstRunSetup(); err != nil {
+		// We can't use a graphical error here as the GUI hasn't started.
+		// Logging to a file or stderr is an option, but for now, we'll panic.
+		panic(fmt.Sprintf("First-run setup failed: %v", err))
+	} else if installed {
+		os.Exit(0)
+	}
+
 	const defaultPort = "58141"
 	guiAddress := "127.0.0.1:" + defaultPort
 	guiUrl := "http://" + guiAddress
@@ -52,5 +62,5 @@ func init() {
 	rootCmd.AddCommand(block.BlockCmd)
 	rootCmd.AddCommand(gui.GuiCmd)
 	rootCmd.AddCommand(uninstall.UninstallCmd)
-	rootCmd.AddCommand(internal.UpdateHostsCmd)
+	rootCmd.AddCommand(NativeHostCmd)
 }

@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "ProcGuard Enforcer",
+  "version": "1.0",
+  "description": "A UI-less extension to enforce ProcGuard's web blocking rules.",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "nativeMessaging",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["http://127.0.0.1:58141/*"],
+      "js": ["content_script.js"]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "com.nixuris.procguard",
+  "description": "ProcGuard Native Messaging Host",
+  "path": "__PROCGUARD_EXECUTABLE_PATH__", 
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://fbgjpgfhjdhckpmfaopmjibhgfnpckik/" 
+  ]
+}
+
+// Instructions:
+// 1. This file must be placed in a specific directory on your system for the browser to find it.
+//    - For Windows, a registry key must be created.
+//    - For Linux, it's typically ~/.config/google-chrome/NativeMessagingHosts/
+//    - For macOS, it's ~/Library/Application Support/Google/Chrome/NativeMessagingHosts/
+//
+// 2. The "path" value must be replaced with the absolute path to your compiled ProcGuard executable.
+//
+// 3. The "__EXTENSION_ID__" must be replaced with the actual ID of your extension once you load it into the browser for testing.

@@ -10,7 +10,7 @@ import (
 	"procguard/internal/blocklist"
 	"procguard/internal/config"
 	"procguard/internal/logsearch"
-	"procguard/internal/privilege"
+
 	"procguard/internal/webblocklist"
 	"slices"
 	"strings"
@@ -380,108 +380,3 @@ func (s *Server) apiWebBlockList(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Server) apiWebBlock(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Domains []string `json:"domains"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
-	}
-
-	list, err := webblocklist.Load()
-	if err != nil {
-		http.Error(w, "Failed to load web blocklist", http.StatusInternalServerError)
-		return
-	}
-
-	for _, domain := range req.Domains {
-		lowerDomain := strings.ToLower(domain)
-		if !slices.Contains(list, lowerDomain) {
-			list = append(list, lowerDomain)
-		}
-	}
-
-	if err := webblocklist.Save(list); err != nil {
-		http.Error(w, "Failed to save web blocklist", http.StatusInternalServerError)
-		return
-	}
-
-	// Write to hosts file with elevation
-	tempFile, err := os.CreateTemp("", "procguard-hosts-*.json")
-	if err != nil {
-		http.Error(w, "Failed to create temp file for hosts update", http.StatusInternalServerError)
-		return
-	}
-	defer os.Remove(tempFile.Name())
-
-	encoder := json.NewEncoder(tempFile)
-	if err := encoder.Encode(list); err != nil {
-		http.Error(w, "Failed to write to temp file", http.StatusInternalServerError)
-		return
-	}
-	tempFile.Close()
-
-	if err := privilege.RunAsAdmin("internal-update-hosts", tempFile.Name()); err != nil {
-		http.Error(w, "Failed to run elevated command", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(map[string]bool{"ok": true}); err != nil {
-		s.logger.Printf("Error encoding response: %v", err)
-	}
-}
-
-func (s *Server) apiWebUnblock(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Domains []string `json:"domains"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
-		return
-	}
-
-	list, err := webblocklist.Load()
-	if err != nil {
-		http.Error(w, "Failed to load web blocklist", http.StatusInternalServerError)
-		return
-	}
-
-	for _, domain := range req.Domains {
-		lowerDomain := strings.ToLower(domain)
-		list = slices.DeleteFunc(list, func(item string) bool {
-			return item == lowerDomain
-		})
-	}
-
-	if err := webblocklist.Save(list); err != nil {
-		http.Error(w, "Failed to save web blocklist", http.StatusInternalServerError)
-		return
-	}
-
-	// Write to hosts file with elevation
-	tempFile, err := os.CreateTemp("", "procguard-hosts-*.json")
-	if err != nil {
-		http.Error(w, "Failed to create temp file for hosts update", http.StatusInternalServerError)
-		return
-	}
-	defer os.Remove(tempFile.Name())
-
-	encoder := json.NewEncoder(tempFile)
-	if err := encoder.Encode(list); err != nil {
-		http.Error(w, "Failed to write to temp file", http.StatusInternalServerError)
-		return
-	}
-	tempFile.Close()
-
-	if err := privilege.RunAsAdmin("internal-update-hosts", tempFile.Name()); err != nil {
-		http.Error(w, "Failed to run elevated command", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(map[string]bool{"ok": true}); err != nil {
-		s.logger.Printf("Error encoding response: %v", err)
-	}
-}

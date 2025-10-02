@@ -6,13 +6,27 @@ import (
 	"path/filepath"
 )
 
-// GetConfigPath returns the path to the configuration file.
-func GetConfigPath() (string, error) {
-	cacheDir, err := os.UserCacheDir()
+// GetAppDataDir returns the primary, cross-platform application data directory.
+func GetAppDataDir() (string, error) {
+	// Note: Using UserConfigDir instead of UserCacheDir to store persistent data.
+	dir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(cacheDir, "procguard", "spec.json"), nil
+	appDir := filepath.Join(dir, "ProcGuard")
+	if err := os.MkdirAll(appDir, 0755); err != nil {
+		return "", err
+	}
+	return appDir, nil
+}
+
+// GetConfigPath returns the path to the configuration file.
+func GetConfigPath() (string, error) {
+	appDir, err := GetAppDataDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(appDir, "spec.json"), nil
 }
 
 // Load reads the configuration file from the user's cache directory.

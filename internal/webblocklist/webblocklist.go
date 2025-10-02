@@ -4,18 +4,19 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"procguard/internal/config"
 	"strings"
 )
 
 const blockListFile = "web_blocklist.json"
 
-// Load reads the web blocklist file from the user's cache directory.
+// Load reads the web blocklist file from the application data directory.
 func Load() ([]string, error) {
-	cacheDir, err := os.UserCacheDir()
+	appDir, err := config.GetAppDataDir()
 	if err != nil {
 		return nil, err
 	}
-	p := filepath.Join(cacheDir, "procguard", blockListFile)
+	p := filepath.Join(appDir, blockListFile)
 
 	b, err := os.ReadFile(p)
 	if os.IsNotExist(err) {
@@ -42,15 +43,11 @@ func Save(list []string) error {
 		list[i] = strings.ToLower(list[i])
 	}
 
-	cacheDir, err := os.UserCacheDir()
+	appDir, err := config.GetAppDataDir()
 	if err != nil {
 		return err
 	}
-	procguardDir := filepath.Join(cacheDir, "procguard")
-	if err := os.MkdirAll(procguardDir, 0755); err != nil {
-		return err
-	}
-	p := filepath.Join(procguardDir, blockListFile)
+	p := filepath.Join(appDir, blockListFile)
 
 	b, err := json.MarshalIndent(list, "", "  ")
 	if err != nil {

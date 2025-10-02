@@ -80,14 +80,22 @@
   </div>
 
   <div id="web-block-view" style="display:none;">
-    <h2>Quản lý web</h2>
-    <div id="web-block-controls">
-        <input id="web-domain" placeholder="nhập tên miền">
-        <button onclick="addWebBlock()">Chặn tên miền</button>
-        <button onclick="removeWebBlock()">Bỏ chặn mục đã chọn</button>
-        <span id="web-block-status" class="status-message"></span>
+    <div id="extension-prompt">
+        <h2>Yêu cầu Tiện ích Mở rộng</h2>
+        <p>Để sử dụng tính năng quản lý web, bạn cần cài đặt tiện ích trình duyệt ProcGuard Enforcer.</p>
+        <button onclick="window.open('https://chrome.google.com/webstore/category/extensions', '_blank')">Tới Chrome Web Store</button>
+        <p><small>(Lưu ý: Liên kết này là một placeholder. Nó sẽ trỏ đến tiện ích thực tế khi được xuất bản.)</small></p>
     </div>
-    <div id="web-blocklist-items"></div>
+    <div id="web-management-ui" style="display: none;">
+        <h2>Quản lý web</h2>
+        <div id="web-block-controls">
+            <input id="web-domain" placeholder="nhập tên miền">
+            <button onclick="addWebBlock()">Chặn tên miền</button>
+            <button onclick="removeWebBlock()">Bỏ chặn mục đã chọn</button>
+            <span id="web-block-status" class="status-message"></span>
+        </div>
+        <div id="web-blocklist-items"></div>
+    </div>
   </div>
 
   <div id="settings-view" style="display:none;">
@@ -112,6 +120,16 @@
   </div>
 
   <script>
+    // --- Extension Detection Logic ---
+    document.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('procguard_extension_present', () => {
+            console.log("ProcGuard extension detected. Enabling web management UI.");
+            document.getElementById('extension-prompt').style.display = 'none';
+            document.getElementById('web-management-ui').style.display = 'block';
+        }, { once: true });
+    });
+    // --- End Extension Detection Logic ---
+
     // Views
     const mainView = document.getElementById('main-view');
     const appManagementView = document.getElementById('app-management-view');
@@ -159,6 +177,7 @@
             showAppView('search-view');
         }
         if (viewName === 'web-block-view') {
+            // When showing the web block view, the detection logic will handle which sub-view to show.
             loadWebBlocklist();
         }
     }
@@ -185,21 +204,20 @@
         }
     }
 
+    // NOTE: The addWebBlock and removeWebBlock functions below are now placeholders.
+    // They need to be rewritten to communicate with the native host via the extension.
     async function addWebBlock() {
         const domain = webDomainInput.value.trim();
         if (domain === "") {
             alert("Vui lòng nhập một tên miền.");
             return;
         }
-        await fetch('/api/web-block', { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ domains: [domain] })
-        });
-        webBlockStatus.innerText = 'Đã gửi yêu cầu chặn tên miền. Vui lòng xác nhận quyền quản trị.';
-        setTimeout(() => { webBlockStatus.innerText = ''; }, 5000);
+        // TODO: Send message to extension -> native host
+        console.log("TODO: Send message to native host to block", domain);
+        webBlockStatus.innerText = 'Chức năng đang được phát triển.';
+        setTimeout(() => { webBlockStatus.innerText = ''; }, 3000);
         webDomainInput.value = '';
-        loadWebBlocklist();
+        // loadWebBlocklist(); // This should be updated based on response from native host
     }
 
     async function removeWebBlock() {
@@ -208,14 +226,11 @@
             alert("Vui lòng chọn các tên miền để bỏ chặn.");
             return;
         }
-        await fetch('/api/web-unblock', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({domains: selectedDomains})
-        });
-        webBlockStatus.innerText = 'Đã gửi yêu cầu bỏ chặn tên miền. Vui lòng xác nhận quyền quản trị.';
-        setTimeout(() => { webBlockStatus.innerText = ''; }, 5000);
-        loadWebBlocklist();
+        // TODO: Send message to extension -> native host
+        console.log("TODO: Send message to native host to unblock", selectedDomains);
+        webBlockStatus.innerText = 'Chức năng đang được phát triển.';
+        setTimeout(() => { webBlockStatus.innerText = ''; }, 3000);
+        // loadWebBlocklist(); // This should be updated based on response from native host
     }
 
     async function search(range){
